@@ -17,7 +17,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="w-full max-w-md p-6 bg-white shadow-lg rounded-lg dark:bg-gray-800">
+      <div className="w-full p-6 bg-white shadow-lg rounded-lg dark:bg-gray-800">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label
@@ -58,10 +58,11 @@ export default function Home() {
               Submit
             </button>
           </div>
-          <div>
+        </form>
+        {/* <div className='pt-4 font-medium'>Generated</div> */}
+          <div className='pt-10'>
             {component}
           </div>
-        </form>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { streamUI } from "ai/rsc";
 import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 import axios from "axios";
+import { marked } from 'marked';
 var gh = require("parse-github-url");
 
 const openai = createOpenAI({
@@ -108,11 +109,13 @@ export async function streamComponent(link: string) {
     })
     .join("\n");
 
-  const result = await streamUI({
-    model: openai("openai/gpt-4-32k"),
-    prompt: `using the file content of the following files generate dockerfile and workflow.yml files\n\n${prompt}`,
-    text: ({ content }) => <div>{content}</div>,
-  });
+    const result = await streamUI({
+      model: openai("openai/gpt-4-32k"),
+      prompt: `using the file content of the following files generate dockerfile and workflow.yml files\n\n${prompt}`,
+      text: ({ content }) => (
+        <div dangerouslySetInnerHTML={{ __html: marked(content) }} />
+      ),
+    });
 
   return result.value;
 }
