@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GitHubLogoIcon } from '@radix-ui/react-icons';
+import { streamComponent } from './actions';
 
 export default function Home() {
+  const [component, setComponent] = useState<React.ReactNode>();
   const [link, setLink] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -47,9 +49,17 @@ export default function Home() {
             <button
               type="submit"
               className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-600 transition-colors"
+              onClick={async e => {
+                e.preventDefault();
+                setComponent(await streamComponent(link));
+                setLink('')
+              }}
             >
               Submit
             </button>
+          </div>
+          <div>
+            {component}
           </div>
         </form>
       </div>
