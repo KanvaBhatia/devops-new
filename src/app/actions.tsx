@@ -54,39 +54,64 @@ export async function streamComponent(link: string) {
       headers: {
         Authorization: `token ${process.env.GITHUB_TOKEN}`,
       },
-    },
+    }
   );
 
   const { default_branch } = gitResponse.data;
   console.log({ default_branch });
-  const defaultGitUrl = `https://api.github.com/repos/${repo_details.owner}/${repo_details.name}/git/trees/${default_branch}`
-  
+  const defaultGitUrl = `https://api.github.com/repos/${repo_details.owner}/${repo_details.name}/git/trees/${default_branch}`;
+
   const gitData = await axios.get(defaultGitUrl, {
     headers: {
       Authorization: `token ${process.env.GITHUB_TOKEN}`,
     },
   });
 
-  const nodes = gitData?.data?.tree
-  console.log({nodes})
+  const nodes = gitData?.data?.tree;
+  const blobs = nodes?.filter((node: any) => node.type === "blob");
+  console.log({ blobs });
+
+  const fileNamesAndUrls = await Promise.all(
+    blobs?.map((blob: any) => {
+      if (blob.size < 10000) {
+        return axios
+          .get(blob.url, {
+            headers: {
+              Authorization: `token ${process.env.GITHUB_TOKEN}`,
+            },
+          })
+          .then((contentResp) => {
+            const contentData = contentResp.data;
+            const content = contentData.content;
+            // base64 decode the content
+            const decodedContent = Buffer.from(content, "base64").toString(
+              "utf-8"
+            );
+            return {
+              name: blob.path,
+              url: blob.url,
+              content: decodedContent,
+            };
+          });
+      }
+    })
+  );
+
+  console.log({ fileNamesAndUrls });
+
+  // create a prompt like using the file content of the following files generate dockerfile and workflow.yml files
+
+  const prompt = fileNamesAndUrls
+    .map((file) => {
+      if (!file) return;
+      return `File: ${file.name}\nContent: ${file.content}`;
+    })
+    .join("\n");
 
   const result = await streamUI({
-    model: openai("gpt-4o"),
-    prompt: "Get the weather for San Francisco",
+    model: openai("openai/gpt-4-32k"),
+    prompt: `using the file content of the following files generate dockerfile and workflow.yml files\n\n${prompt}`,
     text: ({ content }) => <div>{content}</div>,
-    tools: {
-      getWeather: {
-        description: "Get the weather for a location",
-        parameters: z.object({
-          location: z.string(),
-        }),
-        generate: async function* ({ location }) {
-          yield <LoadingComponent />;
-          const weather = await getWeather(location);
-          return <WeatherComponent weather={weather} location={location} />;
-        },
-      },
-    },
   });
 
   return result.value;
